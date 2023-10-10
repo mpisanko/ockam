@@ -267,94 +267,108 @@ jobs:
         fi
         ls $GITHUB_WORKSPACE
 
-    - name: Install Cosign
-      uses: sigstore/cosign-installer@11086d25041f77fe8fe7b9ea4e48e3b9192b8f19
+    # - name: Install Cosign
+    #   uses: sigstore/cosign-installer@11086d25041f77fe8fe7b9ea4e48e3b9192b8f19
+    #   with:
+    #     cosign-release: 'v2.0.0'
+
+    # - name: Sign Binaries
+    #   env:
+    #     PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'
+    #     COSIGN_PASSWORD: '${{ secrets.COSIGN_PRIVATE_KEY_PASSWORD }}'
+    #   run: |
+    #     cosign sign-blob --yes --key env://PRIVATE_KEY "${{ env.ASSET_OCKAM_CLI }}" > "${{ env.ASSET_OCKAM_CLI }}.sig"
+    #     if [ -n "${{ env.ASSET_OCKAM_APP_DMG }}" ]; then
+    #       cosign sign-blob --yes --key env://PRIVATE_KEY "${{ env.ASSET_OCKAM_APP_DMG }}" > "${{ env.ASSET_OCKAM_APP_DMG }}.sig"
+    #     fi
+    #     if [ -n "${{ env.ASSET_OCKAM_APP_DEB }}" ]; then
+    #       cosign sign-blob --yes --key env://PRIVATE_KEY "${{ env.ASSET_OCKAM_APP_DEB }}" > "${{ env.ASSET_OCKAM_APP_DEB }}.sig"
+    #     fi
+
+    # - name: Upload CLI release archive
+    #   uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ needs.create_release.outputs.upload_url }}
+    #     asset_path: ${{ env.ASSET_OCKAM_CLI }}
+    #     asset_name: ${{ env.ASSET_OCKAM_CLI }}
+    #     asset_content_type: application/octet-stream
+
+    # - name: Upload CLI Signature
+    #   uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ needs.create_release.outputs.upload_url }}
+    #     asset_path: ${{ env.ASSET_OCKAM_CLI }}.sig
+    #     asset_name: ${{ env.ASSET_OCKAM_CLI }}.sig
+    #     asset_content_type: application/octet-stream
+
+    # - name: Upload MacOS App release
+    #   uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
+    #   if: ${{ env.ASSET_OCKAM_APP_DMG }}
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ needs.create_release.outputs.upload_url }}
+    #     asset_path: ${{ env.ASSET_OCKAM_APP_DMG }}
+    #     asset_name: ${{ env.ASSET_OCKAM_APP_DMG }}
+    #     asset_content_type: application/octet-stream
+
+    # - name: Upload MacOS App release Signature
+    #   uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
+    #   if: ${{ env.ASSET_OCKAM_APP_DMG }}
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ needs.create_release.outputs.upload_url }}
+    #     asset_path: ${{ env.ASSET_OCKAM_APP_DMG }}.sig
+    #     asset_name: ${{ env.ASSET_OCKAM_APP_DMG }}.sig
+    #     asset_content_type: application/octet-stream
+
+    # - name: Upload Debian App Package
+    #   uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
+    #   if: ${{ env.ASSET_OCKAM_APP_DEB }}
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ needs.create_release.outputs.upload_url }}
+    #     asset_path: ${{ env.ASSET_OCKAM_APP_DEB }}
+    #     asset_name: ${{ env.ASSET_OCKAM_APP_DEB }}
+    #     asset_content_type: application/octet-stream
+
+    # - name: Upload Debian App Package Signature
+    #   uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
+    #   if: ${{ env.ASSET_OCKAM_APP_DEB }}
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ needs.create_release.outputs.upload_url }}
+    #     asset_path: ${{ env.ASSET_OCKAM_APP_DEB }}.sig
+    #     asset_name: ${{ env.ASSET_OCKAM_APP_DEB }}.sig
+    #     asset_content_type: application/octet-stream
+
+  build_elixir_nifs:
+    name: Build Elixir NIFs
+    needs: create_release
+    environment: release
+    permissions:
+      contents: write
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: cachix/install-nix-action@v20
       with:
-        cosign-release: 'v2.0.0'
-
-    - name: Sign Binaries
-      env:
-        PRIVATE_KEY: '${{ secrets.COSIGN_PRIVATE_KEY }}'
-        COSIGN_PASSWORD: '${{ secrets.COSIGN_PRIVATE_KEY_PASSWORD }}'
-      run: |
-        cosign sign-blob --yes --key env://PRIVATE_KEY "${{ env.ASSET_OCKAM_CLI }}" > "${{ env.ASSET_OCKAM_CLI }}.sig"
-        if [ -n "${{ env.ASSET_OCKAM_APP_DMG }}" ]; then
-          cosign sign-blob --yes --key env://PRIVATE_KEY "${{ env.ASSET_OCKAM_APP_DMG }}" > "${{ env.ASSET_OCKAM_APP_DMG }}.sig"
-        fi
-        if [ -n "${{ env.ASSET_OCKAM_APP_DEB }}" ]; then
-          cosign sign-blob --yes --key env://PRIVATE_KEY "${{ env.ASSET_OCKAM_APP_DEB }}" > "${{ env.ASSET_OCKAM_APP_DEB }}.sig"
-        fi
-
-    - name: Upload CLI release archive
-      uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        nix_path: nixpkgs=channel:nixos-unstable
+    - uses: cachix/cachix-action@v12
       with:
-        upload_url: ${{ needs.create_release.outputs.upload_url }}
-        asset_path: ${{ env.ASSET_OCKAM_CLI }}
-        asset_name: ${{ env.ASSET_OCKAM_CLI }}
-        asset_content_type: application/octet-stream
-
-    - name: Upload CLI Signature
-      uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create_release.outputs.upload_url }}
-        asset_path: ${{ env.ASSET_OCKAM_CLI }}.sig
-        asset_name: ${{ env.ASSET_OCKAM_CLI }}.sig
-        asset_content_type: application/octet-stream
-
-    - name: Upload MacOS App release
-      uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
-      if: ${{ env.ASSET_OCKAM_APP_DMG }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create_release.outputs.upload_url }}
-        asset_path: ${{ env.ASSET_OCKAM_APP_DMG }}
-        asset_name: ${{ env.ASSET_OCKAM_APP_DMG }}
-        asset_content_type: application/octet-stream
-
-    - name: Upload MacOS App release Signature
-      uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
-      if: ${{ env.ASSET_OCKAM_APP_DMG }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create_release.outputs.upload_url }}
-        asset_path: ${{ env.ASSET_OCKAM_APP_DMG }}.sig
-        asset_name: ${{ env.ASSET_OCKAM_APP_DMG }}.sig
-        asset_content_type: application/octet-stream
-
-    - name: Upload Debian App Package
-      uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
-      if: ${{ env.ASSET_OCKAM_APP_DEB }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create_release.outputs.upload_url }}
-        asset_path: ${{ env.ASSET_OCKAM_APP_DEB }}
-        asset_name: ${{ env.ASSET_OCKAM_APP_DEB }}
-        asset_content_type: application/octet-stream
-
-    - name: Upload Debian App Package Signature
-      uses: actions/upload-release-asset@ef2adfe8cb8ebfa540930c452c576b3819990faa
-      if: ${{ env.ASSET_OCKAM_APP_DEB }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create_release.outputs.upload_url }}
-        asset_path: ${{ env.ASSET_OCKAM_APP_DEB }}.sig
-        asset_name: ${{ env.ASSET_OCKAM_APP_DEB }}.sig
-        asset_content_type: application/octet-stream
-
-  # build_elixir_nifs:
-  #   name: Build Elixir NIFs
-  #   needs: create_release
-  #   environment: release
-  #   permissions:
-  #     contents: write
+        name: mycache
+        # If you chose signing key for write access
+        # signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
+        # If you chose API tokens for write access OR if you have a private cache
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    - run: nix-build
+    - run: nix-shell --run "echo OK"
 
   #   strategy:
   #     fail-fast: false
