@@ -43,229 +43,229 @@ jobs:
       #     gpg_name: '${{ secrets.GPG_USER_NAME }}'
       #     gpg_email: '${{ secrets.GPG_EMAIL }}'
 
-      - name: Get Release Text
-        id: release_version
-        env:
-          GIT_TAG: '${{ github.event.inputs.git_tag }}'
-        run: |
-          cargo install tomlq
-          set -x
-          source tools/scripts/release/crates-to-publish.sh
+      # - name: Get Release Text
+      #   id: release_version
+      #   env:
+      #     GIT_TAG: '${{ github.event.inputs.git_tag }}'
+      #   run: |
+      #     cargo install tomlq
+      #     set -x
+      #     source tools/scripts/release/crates-to-publish.sh
 
-          # Add Ockam as first crate
-          ockam_version=$(eval "tomlq package.version -f implementations/rust/ockam/ockam/Cargo.toml")
-          name=$(eval "tomlq package.name -f implementations/rust/ockam/ockam/Cargo.toml")
+      #     # Add Ockam as first crate
+      #     ockam_version=$(eval "tomlq package.version -f implementations/rust/ockam/ockam/Cargo.toml")
+      #     name=$(eval "tomlq package.name -f implementations/rust/ockam/ockam/Cargo.toml")
 
-          text="Ockam $ockam_version"
-
-
-          text="$text
-
-          # Homebrew
-
-          To install this release using Homebrew:
-
-          \`\`\`bash
-          $ brew install build-trust/ockam/ockam
-          \`\`\`"
-
-          # Install Docker image
-          text="$text
-
-          # Docker
-
-          To use the Docker OCI package:
-
-          \`\`\`bash
-          docker pull ghcr.io/build-trust/ockam:$ockam_version
-          \`\`\`"
-
-          text="$text
-
-          # Precompiled Binaries
-
-          \`\`\`bash
-          # download sha256sums.txt
-          curl --proto '=https' --tlsv1.2 -sSfL -O \\
-            https://github.com/build-trust/ockam/releases/download/ockam_v${ockam_version}/sha256sums.txt
-
-          # download sha256sums.txt.sig
-          curl --proto '=https' --tlsv1.2 -sSfL -O \\
-            https://github.com/build-trust/ockam/releases/download/ockam_v${ockam_version}/sha256sums.txt.sig
-
-          # download our release public key
-          curl --proto '=https' --tlsv1.2 -sSfL -o ockam.pub \\
-            https://raw.githubusercontent.com/build-trust/ockam/develop/tools/docker/cosign.pub
-
-          # verify signatures
-          cosign verify-blob --key ockam.pub --signature sha256sums.txt.sig sha256sums.txt
-
-          # download ockam command binary for your architecture
-          curl --proto '=https' --tlsv1.2 -sSfL -O \\
-            https://github.com/build-trust/ockam/releases/download/ockam_v${ockam_version}/ockam.x86_64-unknown-linux-gnu
-
-          # verify that the sha256 hash of the downloaded binary is the same as
-          # the corresponding hash mentioned in sha256sums.txt
-          cat sha256sums.txt | grep ockam.x86_64-unknown-linux-gnu | sha256sum -c
-
-          # rename the download binary and give it permission to execute
-          mv ockam.x86_64-unknown-linux-gnu ockam
-          chmod u+x ockam
-          \`\`\`"
-
-          text="$text
-
-          # Terraform
-
-          To install the [Ockam Terraform Provider](https://registry.terraform.io/providers/build-trust/ockam/$ockam_version), copy and paste this code into your Terraform configuration. Then, run \`terraform init\`.
-
-          \`\`\`
-          terraform {
-            required_providers {
-              ockam = {
-                source = \"build-trust/ockam\"
-                version = \"$ockam_version\"
-              }
-            }
-          }
-          provider "ockam" {}
-          \`\`\`"
-
-          text="$text
-
-          # Rust Crates
-
-          To use Ockam as a Rust library, run the following command within your project directory:
-
-          \`\`\`bash
-          cargo add ockam@$ockam_version
-          \`\`\`
-
-          The following crates were published as part of this release:
-          - \`$name $ockam_version\` ([Documentation](https://docs.rs/$name/$ockam_version/$name/), \
-            [CHANGELOG](https://github.com/build-trust/ockam/blob/ockam_v$ockam_version/implementations/rust/ockam/$name/CHANGELOG.md))"
-
-          for crate in ${updated_crates[@]}; do
-            version=$(eval "tomlq package.version -f $crate/Cargo.toml")
-            name=$(eval "tomlq package.name -f $crate/Cargo.toml")
-
-            if [[ $name == "ockam" ]]; then
-              echo "Skipping ockam crate"
-              continue
-            fi
-
-            text="$text
-          - \`$name $version\` ([Documentation](https://docs.rs/$name/$version/$name/), \
-            [CHANGELOG](https://github.com/build-trust/ockam/blob/ockam_v$ockam_version/implementations/rust/ockam/$name/CHANGELOG.md))";
-          done
-
-          echo "version=$ockam_version" >> $GITHUB_OUTPUT
-          echo "tag_name=ockam_v$ockam_version" >> $GITHUB_OUTPUT
-
-          echo "$text" > release_note.md
-          cat release_note.md
-
-          # Add tag
-          git tag -s ockam_v$ockam_version -m "Ockam Release"
-          git push --tags
-
-      - name: Create GitHub release
-        id: release_upload_url
-        uses: actions/create-release@4c11c9fe1dcd9636620a16455165783b20fc7ea0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          release_name: 'Ockam v${{ steps.release_version.outputs.version }}'
-          tag_name: '${{ steps.release_version.outputs.tag_name }}'
-          body_path: 'release_note.md'
-          draft: true
-
-      - name: Echo Link
-        run: echo "${{ steps.release_upload_url.outputs.html_url }}"
+      #     text="Ockam $ockam_version"
 
 
-  build_release:
-    name: Build Binaries
-    needs: create_release
-    environment: release
-    permissions:
-      contents: write
+      #     text="$text
 
-    strategy:
-      fail-fast: false
-      matrix:
-        build: [linux_arm64, linux_86, linux_armv7, macos_silicon, macos_86]
-        include:
-        - build: linux_arm64
-          os: ubuntu-20.04
-          toolchain: stable
-          target: aarch64-unknown-linux-musl
-          build_app: false
-          use-cross-build: true
-        - build: linux_armv7
-          os: ubuntu-20.04
-          toolchain: stable
-          target: armv7-unknown-linux-musleabihf
-          use-cross-build: true
-          build_app: false
-        - build: linux_86
-          os: ubuntu-20.04
-          toolchain: stable
-          target: x86_64-unknown-linux-musl
-          use-cross-build: true
-          build_app: false
-        - build: linux_86_gnu
-          os: ubuntu-22.04
-          toolchain: stable
-          target: x86_64-unknown-linux-gnu
-          use-cross-build: false
-          build_app: true
-          build_command: false
-        - build: macos_silicon
-          os: macos-latest
-          toolchain: stable
-          target: aarch64-apple-darwin
-          use-cross-build: false
-          build_app: true
-        - build: macos_86
-          os: macos-latest
-          toolchain: stable
-          target: x86_64-apple-darwin
-          use-cross-build: false
-          build_app: true
-    runs-on: ${{ matrix.os }}
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
-      with:
-        ref: ${{ github.event.inputs.release_branch }}
+      #     # Homebrew
 
-    - name: Echo Link
-      run: echo "${{ needs.create_release.outputs.upload_url }}"
+      #     To install this release using Homebrew:
 
-    - uses: ./.github/actions/build_binaries
-      with:
-        use_cross_build: ${{ matrix.use-cross-build }}
-        toolchain: ${{ matrix.toolchain }}
-        target: ${{ matrix.target }}
-        platform_operating_system: ${{ matrix.os }}
-        build_app: ${{ matrix.build_app }}
+      #     \`\`\`bash
+      #     $ brew install build-trust/ockam/ockam
+      #     \`\`\`"
 
-    - name: Copy Artifacts
-      run: |
-        set -x
+      #     # Install Docker image
+      #     text="$text
 
-        cp target/${{ matrix.target }}/release/ockam_command ockam.${{ matrix.target }}
-        echo "ASSET_OCKAM_CLI=ockam.${{ matrix.target }}" >> $GITHUB_ENV
-        if [ -e "target/${{ matrix.target }}/release/bundle/dmg/Ockam"*dmg ]; then
-          cp "target/${{ matrix.target }}/release/bundle/dmg/Ockam"*dmg "ockam.app.${{ matrix.target }}.dmg"
-          echo "ASSET_OCKAM_APP_DMG=ockam.app.${{ matrix.target }}.dmg" >> $GITHUB_ENV
-        fi
-        if [ -e "target/${{ matrix.target }}/release/bundle/deb/ockam"*.deb ]; then
-          cp "target/${{ matrix.target }}/release/bundle/deb/ockam"*.deb "ockam.app.${{ matrix.target }}.deb"
-          echo "ASSET_OCKAM_APP_DEB=ockam.app.${{ matrix.target }}.deb" >> $GITHUB_ENV
-        fi
-        ls $GITHUB_WORKSPACE
+      #     # Docker
+
+      #     To use the Docker OCI package:
+
+      #     \`\`\`bash
+      #     docker pull ghcr.io/build-trust/ockam:$ockam_version
+      #     \`\`\`"
+
+      #     text="$text
+
+      #     # Precompiled Binaries
+
+      #     \`\`\`bash
+      #     # download sha256sums.txt
+      #     curl --proto '=https' --tlsv1.2 -sSfL -O \\
+      #       https://github.com/build-trust/ockam/releases/download/ockam_v${ockam_version}/sha256sums.txt
+
+      #     # download sha256sums.txt.sig
+      #     curl --proto '=https' --tlsv1.2 -sSfL -O \\
+      #       https://github.com/build-trust/ockam/releases/download/ockam_v${ockam_version}/sha256sums.txt.sig
+
+      #     # download our release public key
+      #     curl --proto '=https' --tlsv1.2 -sSfL -o ockam.pub \\
+      #       https://raw.githubusercontent.com/build-trust/ockam/develop/tools/docker/cosign.pub
+
+      #     # verify signatures
+      #     cosign verify-blob --key ockam.pub --signature sha256sums.txt.sig sha256sums.txt
+
+      #     # download ockam command binary for your architecture
+      #     curl --proto '=https' --tlsv1.2 -sSfL -O \\
+      #       https://github.com/build-trust/ockam/releases/download/ockam_v${ockam_version}/ockam.x86_64-unknown-linux-gnu
+
+      #     # verify that the sha256 hash of the downloaded binary is the same as
+      #     # the corresponding hash mentioned in sha256sums.txt
+      #     cat sha256sums.txt | grep ockam.x86_64-unknown-linux-gnu | sha256sum -c
+
+      #     # rename the download binary and give it permission to execute
+      #     mv ockam.x86_64-unknown-linux-gnu ockam
+      #     chmod u+x ockam
+      #     \`\`\`"
+
+      #     text="$text
+
+      #     # Terraform
+
+      #     To install the [Ockam Terraform Provider](https://registry.terraform.io/providers/build-trust/ockam/$ockam_version), copy and paste this code into your Terraform configuration. Then, run \`terraform init\`.
+
+      #     \`\`\`
+      #     terraform {
+      #       required_providers {
+      #         ockam = {
+      #           source = \"build-trust/ockam\"
+      #           version = \"$ockam_version\"
+      #         }
+      #       }
+      #     }
+      #     provider "ockam" {}
+      #     \`\`\`"
+
+      #     text="$text
+
+      #     # Rust Crates
+
+      #     To use Ockam as a Rust library, run the following command within your project directory:
+
+      #     \`\`\`bash
+      #     cargo add ockam@$ockam_version
+      #     \`\`\`
+
+      #     The following crates were published as part of this release:
+      #     - \`$name $ockam_version\` ([Documentation](https://docs.rs/$name/$ockam_version/$name/), \
+      #       [CHANGELOG](https://github.com/build-trust/ockam/blob/ockam_v$ockam_version/implementations/rust/ockam/$name/CHANGELOG.md))"
+
+      #     for crate in ${updated_crates[@]}; do
+      #       version=$(eval "tomlq package.version -f $crate/Cargo.toml")
+      #       name=$(eval "tomlq package.name -f $crate/Cargo.toml")
+
+      #       if [[ $name == "ockam" ]]; then
+      #         echo "Skipping ockam crate"
+      #         continue
+      #       fi
+
+      #       text="$text
+      #     - \`$name $version\` ([Documentation](https://docs.rs/$name/$version/$name/), \
+      #       [CHANGELOG](https://github.com/build-trust/ockam/blob/ockam_v$ockam_version/implementations/rust/ockam/$name/CHANGELOG.md))";
+      #     done
+
+      #     echo "version=$ockam_version" >> $GITHUB_OUTPUT
+      #     echo "tag_name=ockam_v$ockam_version" >> $GITHUB_OUTPUT
+
+      #     echo "$text" > release_note.md
+      #     cat release_note.md
+
+      #     # Add tag
+      #     git tag -s ockam_v$ockam_version -m "Ockam Release"
+      #     git push --tags
+
+  #     - name: Create GitHub release
+  #       id: release_upload_url
+  #       uses: actions/create-release@4c11c9fe1dcd9636620a16455165783b20fc7ea0
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         release_name: 'Ockam v${{ steps.release_version.outputs.version }}'
+  #         tag_name: '${{ steps.release_version.outputs.tag_name }}'
+  #         body_path: 'release_note.md'
+  #         draft: true
+
+  #     - name: Echo Link
+  #       run: echo "${{ steps.release_upload_url.outputs.html_url }}"
+
+
+  # build_release:
+  #   name: Build Binaries
+  #   needs: create_release
+  #   environment: release
+  #   permissions:
+  #     contents: write
+
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       build: [linux_arm64, linux_86, linux_armv7, macos_silicon, macos_86]
+  #       include:
+  #       - build: linux_arm64
+  #         os: ubuntu-20.04
+  #         toolchain: stable
+  #         target: aarch64-unknown-linux-musl
+  #         build_app: false
+  #         use-cross-build: true
+  #       - build: linux_armv7
+  #         os: ubuntu-20.04
+  #         toolchain: stable
+  #         target: armv7-unknown-linux-musleabihf
+  #         use-cross-build: true
+  #         build_app: false
+  #       - build: linux_86
+  #         os: ubuntu-20.04
+  #         toolchain: stable
+  #         target: x86_64-unknown-linux-musl
+  #         use-cross-build: true
+  #         build_app: false
+  #       - build: linux_86_gnu
+  #         os: ubuntu-22.04
+  #         toolchain: stable
+  #         target: x86_64-unknown-linux-gnu
+  #         use-cross-build: false
+  #         build_app: true
+  #         build_command: false
+  #       - build: macos_silicon
+  #         os: macos-latest
+  #         toolchain: stable
+  #         target: aarch64-apple-darwin
+  #         use-cross-build: false
+  #         build_app: true
+  #       - build: macos_86
+  #         os: macos-latest
+  #         toolchain: stable
+  #         target: x86_64-apple-darwin
+  #         use-cross-build: false
+  #         build_app: true
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #   - name: Checkout repository
+  #     uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
+  #     with:
+  #       ref: ${{ github.event.inputs.release_branch }}
+
+  #   - name: Echo Link
+  #     run: echo "${{ needs.create_release.outputs.upload_url }}"
+
+  #   - uses: ./.github/actions/build_binaries
+  #     with:
+  #       use_cross_build: ${{ matrix.use-cross-build }}
+  #       toolchain: ${{ matrix.toolchain }}
+  #       target: ${{ matrix.target }}
+  #       platform_operating_system: ${{ matrix.os }}
+  #       build_app: ${{ matrix.build_app }}
+
+  #   - name: Copy Artifacts
+  #     run: |
+  #       set -x
+
+  #       cp target/${{ matrix.target }}/release/ockam_command ockam.${{ matrix.target }}
+  #       echo "ASSET_OCKAM_CLI=ockam.${{ matrix.target }}" >> $GITHUB_ENV
+  #       if [ -e "target/${{ matrix.target }}/release/bundle/dmg/Ockam"*dmg ]; then
+  #         cp "target/${{ matrix.target }}/release/bundle/dmg/Ockam"*dmg "ockam.app.${{ matrix.target }}.dmg"
+  #         echo "ASSET_OCKAM_APP_DMG=ockam.app.${{ matrix.target }}.dmg" >> $GITHUB_ENV
+  #       fi
+  #       if [ -e "target/${{ matrix.target }}/release/bundle/deb/ockam"*.deb ]; then
+  #         cp "target/${{ matrix.target }}/release/bundle/deb/ockam"*.deb "ockam.app.${{ matrix.target }}.deb"
+  #         echo "ASSET_OCKAM_APP_DEB=ockam.app.${{ matrix.target }}.deb" >> $GITHUB_ENV
+  #       fi
+  #       ls $GITHUB_WORKSPACE
 
     # - name: Install Cosign
     #   uses: sigstore/cosign-installer@11086d25041f77fe8fe7b9ea4e48e3b9192b8f19
