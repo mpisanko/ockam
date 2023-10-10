@@ -35,13 +35,13 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.inputs.release_branch }}
 
-      - name: Import GPG key
-        uses: build-trust/.github/actions/import_gpg@a6377d3c2dac878b92a0da26cdf3da2856c64840
-        with:
-          gpg_private_key: '${{ secrets.GPG_PRIVATE_KEY }}'
-          gpg_password: '${{ secrets.GPG_PASSPHRASE }}'
-          gpg_name: '${{ secrets.GPG_USER_NAME }}'
-          gpg_email: '${{ secrets.GPG_EMAIL }}'
+      # - name: Import GPG key
+      #   uses: build-trust/.github/actions/import_gpg@a6377d3c2dac878b92a0da26cdf3da2856c64840
+      #   with:
+      #     gpg_private_key: '${{ secrets.GPG_PRIVATE_KEY }}'
+      #     gpg_password: '${{ secrets.GPG_PASSPHRASE }}'
+      #     gpg_name: '${{ secrets.GPG_USER_NAME }}'
+      #     gpg_email: '${{ secrets.GPG_EMAIL }}'
 
       - name: Get Release Text
         id: release_version
